@@ -1,0 +1,19 @@
+{
+    "train":
+    {
+        "epochs" : 30,
+        "optimizier": "adam",
+        "learning_rate": 0.01,
+        "loss": "binary_cross_entropy"
+    },
+    "model":
+    {
+        "num_layers": 12,
+        "num_head": 12,
+        "dropout": 0.1, 
+        "norm_coff": 1e-12,
+        "dense_units": 2048,
+        "dimension": 768,
+        "patch_size": 32
+    }
+}

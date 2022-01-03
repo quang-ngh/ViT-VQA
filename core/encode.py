@@ -40,9 +40,9 @@ class MHSABlock(tf.keras.layers.Layer):
         output += attention # Skip connection
         return output
 
-class VEncoder(tf.keras.layers.Layer):
+class Encoder(tf.keras.layers.Layer):
     def __init__(self, num_layers_encoder, num_heads, Dim, hidden_dim, dropout, norm_coff = 1e-12):
-        super(VEncoder, self).__init__()
+        super(Encoder, self).__init__()
         self.encoder = tf.keras.Sequential(
             [
                 MHSABlock(

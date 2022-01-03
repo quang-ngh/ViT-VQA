@@ -34,6 +34,7 @@ class MHSADrugVQA(tf.keras.models.Model):
         #Processing 2D Feature
         v_embd = self.Vembedding(contactMap)
         l_embd = self.Lembedding(smiles)
+        print("Shape of smiles: {}".format(tf.shape(l_embd)))
         img_rep = self.encoderV(v_embd) #Shape = [batch_size, Dim]
         seq_rep = self.encoderL(l_embd)
         img_vec = self.flatten(img_rep[:,0])

@@ -33,24 +33,24 @@ class MHSADrugVQA(tf.keras.models.Model):
         )
         self.Lembedding = tf.keras.layers.Embedding(n_chars, Dim)
         self.flatten = tf.keras.layers.Flatten()
-        self.h_vector = tf.convert_to_tensor(np.random.random_integers(low = 0, high = mcb_dim, size = (1,Dim)))
-        self.s_vector = tf.convert_to_tensor(np.random.choice([1,-1], size = (1,Dim)))
-        print(self.h_vector)
-        print(self.s_vector)
-
+        self.h_vector = np.random.random_integers(low = 0, high = mcb_dim, size = (1,Dim))
+        self.s_vector = np.random.choice([1.0,-1.0], size = (1,Dim))
+        
     def CS_projection(self,v,dim):
-        projection = tf.zeros((1,dim), dtype= tf.float32)
+        projection = np.zeros((1,dim), dtype=np.float32)
+        
         for i in range(dim):
-            projection[self.h_vector[i]] = projection[self.h_vector[i]] + self.s_vector[i]*v[i]
-        return projection
+            
+            projection[0][self.h_vector[0][i]] = projection[0][self.h_vector[0][i]] + self.s_vector[0][i]*v[0][i]
+        return tf.convert_to_tensor(projection, dtype=tf.float32)
     
     def MCB(self,img_vec, seq_vec):
-        img_proj = self.CS_projection(img_vec, dim=tf.shape(img_vec)[-1])
-        seq_proj = self.CS_projection(seq_vec, tf.shape(seq_vec)[-1])
+        img_proj = tf.cast(self.CS_projection(img_vec, dim=img_vec.shape[-1]), dtype=tf.complex64)
+        seq_proj = tf.cast(self.CS_projection(seq_vec, seq_vec.shape[-1]), dtype=tf.complex64)
 
-        output = tf.signal.fft(img_proj) * tf.signal.fft(seq_proj)
-        output = tf.signal.ifft(output)
-
+        output = tf.signal.fft2d(img_proj) * tf.signal.fft2d(seq_proj)
+        output = tf.signal.irfft2d(output)
+        return output
 
     def call(self, contactMap, smiles):
         #Processing 2D Feature
@@ -62,15 +62,12 @@ class MHSADrugVQA(tf.keras.models.Model):
         
         img_vec = img_rep[:,0]
         seq_vec = seq_rep[:,0]
-
+        
         mcb_output = self.MCB(img_vec, seq_vec)
-        print("MCB Shape: {}".format(tf.shape(mcb_output)))
+        
+        output = self.classifier(mcb_output)
 
-
-
-        #Processing SMILES
-
-        return img_rep, seq_rep
+        return output
 
 def create_model():
     args = get_hypers_model()

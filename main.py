@@ -1,4 +1,4 @@
-from model import create_model
+from core.model import create_model
 import numpy as np
 import tensorflow as tf
 

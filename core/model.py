@@ -1,6 +1,6 @@
 import tensorflow as tf
-from embedding import *
-from encode import *
+from core.embedding import *
+from core.encode import *
 from utils import *
 
 class MHSADrugVQA(tf.keras.models.Model):

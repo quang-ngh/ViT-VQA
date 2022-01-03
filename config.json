@@ -12,8 +12,8 @@
         "num_head": 12,
         "dropout": 0.1, 
         "norm_coff": 1e-12,
-        "dense_units": 2048,
-        "dimension": 768,
+        "dense_units": 128,
+        "dimension": 128,
         "patch_size": 32
     }
 }

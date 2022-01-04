@@ -10,10 +10,9 @@ def get_hypers_model():
         data = json.load(f)["model"]
     return data
 
-
 def create_variable(tensor):
     # Do cuda() before wrapping with variable
-    return Variable(tensor)
+    return tensor
 def replace_halogen(string):
     """Regex to replace Br and Cl with single letters"""
     br = re.compile('Br')
@@ -29,11 +28,12 @@ def make_variables(lines, properties,letters):
     return pad_sequences(vectorized_seqs, seq_lengths, properties)
 
 def line2voc_arr(line,letters):
+    #print(line)
     arr = []
     regex = '(\[[^\[\]]{1,10}\])'
     line = replace_halogen(line)
     char_list = re.split(regex, line)
-    ##print(char_list)
+    #print("Char List: {}".format(char_list))
     for li, char in enumerate(char_list):
         if char.startswith('['):
                arr.append(letterToIndex(char,letters)) 
@@ -48,19 +48,26 @@ def letterToIndex(letter,smiles_letters):
     return smiles_letters.index(letter)
 # pad sequences and sort the tensor
 def pad_sequences(vectorized_seqs, seq_lengths, properties):
+    #print("Vec seq: {}".format(vectorized_seqs))
     #print("Init length: {}".format(seq_lengths))
-    seq_tensor = tf.zeros((len(vectorized_seqs), seq_lengths.max()), dtype = tf.float32)
+    seq_tensor = np.zeros((len(vectorized_seqs), np.max(seq_lengths)), dtype = np.float32)
+    #print("Shape of seq_tensor: {}".format(seq_tensor.shape))
     for idx, (seq, seq_len) in enumerate(zip(vectorized_seqs, seq_lengths)):
-        seq_tensor[idx, :seq_len] = tf.convert_to_tensor(seq, dtype = tf.float32)#torch.LongTensor(seq)
-
+        seq_tensor[idx, :seq_len] = seq #Get the array of index in vocabulary
+    seq_tensor = tf.convert_to_tensor(seq_tensor, dtype=tf.float32)
     # Sort tensors by their length
-    seq_lengths, perm_idx = seq_lengths.sort(0, descending=True)
+    seq_lengths.numpy().sort()
+    seq_lengths = seq_lengths[::-1]
+    perm_idx = 0
     seq_tensor = seq_tensor[perm_idx]
-    #print("Seq length: {}".format(seq_tensor.shape[1]))
+    ##print("Seq length: {}".format(seq_tensor.shape[1]))
     # Also sort the target (countries) in the same order
-    target = properties.double()
-    if len(properties):
-        target = target[perm_idx]
+    tmp_properties = int(properties)
+    target = np.zeros((1,2))
+    target[0][tmp_properties] = 1
+
+    target = tf.convert_to_tensor([tmp_properties], dtype=tf.float32)
+    
     # Return variables
     # DataParallel requires everything to be a Variable
     return create_variable(seq_tensor),create_variable(seq_lengths),create_variable(target)
@@ -71,7 +78,7 @@ def pad_sequences_seq(vectorized_seqs, seq_lengths):
 
     # Sort tensors by their length
     seq_lengths, perm_idx = seq_lengths.sort(0, descending=True)
-#     #print(seq_tensor)
+#     ##print(seq_tensor)
     seq_tensor = seq_tensor[perm_idx]
     # Return variables
     # DataParallel requires everything to be a Variable
@@ -92,7 +99,7 @@ def construct_vocabulary(smiles_list,fname):
                 chars = [unit for unit in char]
                 [add_chars.add(unit) for unit in chars]
 
-    #print("Number of characters: {}".format(len(add_chars)))
+    ##print("Number of characters: {}".format(len(add_chars)))
     with open(fname, 'w') as f:
         f.write('<pad>' + "\n")
         for char in add_chars:
@@ -136,7 +143,7 @@ def getSeqContactDict(contactPath,contactDictPath):# make a seq-contactMap dict
         seq,contactMap = getProtein(contactPath,contactMapName)
         contactmap_np = [list(map(float, x.strip(' ').split(' '))) for x in contactMap]
         feature2D = np.expand_dims(contactmap_np, axis=0)
-        feature2D = torch.FloatTensor(feature2D)    
+        feature2D = tf.convert_to_tensor(feature2D, dtype=tf.float32) #Shape = [1,H,W]
         seqContactDict[seq] = feature2D
     return seqContactDict
 def getLetters(path):
@@ -148,7 +155,7 @@ def getDataDict(testProteinList,activePath,decoyPath,contactPath):
     for x in testProteinList:#'xiap_2jk7A_full'
         xData = []
         protein = x.split('_')[0]
-        #print(protein)
+        
         proteinActPath = activePath+"/"+protein+"_actives_final.ism"
         proteinDecPath = decoyPath+"/"+protein+"_decoys_final.ism"
         act = open(proteinActPath,'r').readlines()
@@ -160,28 +167,36 @@ def getDataDict(testProteinList,activePath,decoyPath,contactPath):
             xData.append([actives[i][0],seq,actives[i][1]])
         for i in range(len(decoys)):
             xData.append([decoys[i][0],seq,decoys[i][1]])
-        #print(len(xData))
+        ##print(len(xData))
         dataDict[x] = xData
     return dataDict
 
-"""
-def count(trainFoldPath, contactDictPath):
-    with open(trainFoldPath, 'r') as f:
-        trainCpi_list = f.read().strip().split('\n')
-    name = []
-    for item in trainCpi_list:
-        tmp = item.split(' ')
-        if tmp[1] not in name:
-            name.append(tmp[1])
-    name = set(name)
-    _name = []
-    contactDict = open(contactDictPath).readlines()
-    for data in contactDict:
-        _,contactMapName = data.strip().split(':')
-        for item in name: 
-            if(item == _):
-                _name.append(contactMapName)
-    with open("out.txt", mode = "w") as f:
-        for item in _name:
-            f.write(item + "\n")
-"""
+testFoldPath = './data/DUDE/dataPre/DUDE-foldTest3'
+trainFoldPath = './data/DUDE/dataPre/DUDE-foldTrain3'
+contactPath = './data/DUDE/contactMap'
+contactDictPath = './data/DUDE/dataPre/DUDE-contactDict'
+smileLettersPath  = './data/DUDE/voc/combinedVoc-wholeFour.voc'
+seqLettersPath = './data/DUDE/voc/sequence.voc'
+#print('get train datas....')
+trainDataSet = getTrainDataSet(trainFoldPath)
+#print('get seq-contact dict....')
+seqContactDict = getSeqContactDict(contactPath,contactDictPath)
+#print(seqContactDict)
+#print('get letters....')
+smiles_letters = getLetters(smileLettersPath)
+sequence_letters = getLetters(seqLettersPath)
+#count(trainFoldPath, contactDictPath)
+testProteinList = getTestProteinList(testFoldPath)# whole foldTest
+#print("Test List: ", len(testProteinList))
+# testProteinList = ['kpcb_2i0eA_full']# a protein of fold1Test
+testProteinList = ['tryb1_2zebA_full','mcr_2oaxE_full', 'cxcr4_3oduA_full']# protein of fold3Test
+DECOY_PATH = './data/DUDE/decoy_smile'
+ACTIVE_PATH = './data/DUDE/active_smile'
+#print('get protein-seq dict....')
+
+#Get the contact map (pair-wise distance)
+dataDict = getDataDict(testProteinList,ACTIVE_PATH,DECOY_PATH,contactPath)
+#print("Length of testing",len(dataDict))
+
+N_CHARS_SMI = len(smiles_letters)
+N_CHARS_SEQ = len(sequence_letters)

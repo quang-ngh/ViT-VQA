@@ -9,7 +9,7 @@ import numpy as np
 
 
 class MHSADrugVQA(tf.keras.models.Model):
-    def __init__(self, num_layers, num_heads, Dim, hidden_dim, dropout, patch_size, mcb_dim = 800, n_chars=217, norm_coff = 1e-12):
+    def __init__(self, num_layers, num_heads, Dim, hidden_dim, dropout, patch_size, mcb_dim = 800, n_chars=247, norm_coff = 1e-12):
         super(MHSADrugVQA, self).__init__()
         self.Vembedding = PatchesEmbedding(patch_size, Dim)
         self.encoderV = Encoder(num_layers_encoder=num_layers,
@@ -28,7 +28,7 @@ class MHSADrugVQA(tf.keras.models.Model):
             tf.keras.layers.LayerNormalization(epsilon = norm_coff),
             tf.keras.layers.Dense(units = hidden_dim),
             tf.keras.layers.Dropout(rate = dropout),
-            tf.keras.layers.Dense(units = 1, activation = 'sigmoid')
+            tf.keras.layers.Dense(units = 2, activation = 'softmax')
         ]
         )
         self.Lembedding = tf.keras.layers.Embedding(n_chars, Dim)

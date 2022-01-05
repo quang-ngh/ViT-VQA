@@ -64,9 +64,9 @@ def pad_sequences(vectorized_seqs, seq_lengths, properties):
     # Also sort the target (countries) in the same order
     tmp_properties = int(properties)
     target = np.zeros((1,2))
-    target[0][tmp_properties] = 1
+    target[0][tmp_properties] = 1.0
 
-    target = tf.convert_to_tensor([tmp_properties], dtype=tf.float32)
+    target = tf.convert_to_tensor(target, dtype=tf.float32)
     
     # Return variables
     # DataParallel requires everything to be a Variable

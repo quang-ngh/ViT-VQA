@@ -28,7 +28,7 @@ class MHSADrugVQA(tf.keras.models.Model):
             tf.keras.layers.LayerNormalization(epsilon = norm_coff),
             tf.keras.layers.Dense(units = hidden_dim),
             tf.keras.layers.Dropout(rate = dropout),
-            tf.keras.layers.Dense(units = 1, activation = 'sigmoid')
+            tf.keras.layers.Dense(units = 2, activation = 'softmax')
         ]
         )
         self.Lembedding = tf.keras.layers.Embedding(n_chars, Dim)
@@ -52,9 +52,9 @@ class MHSADrugVQA(tf.keras.models.Model):
         output = tf.signal.irfft2d(output)
         return output
 
-    def call(self, inputs):
-        contactMap = inputs[0]
-        smiles = inputs[1]
+    def call(self, smiles, contactMap):
+        #contactMap = inputs[0]
+        #smiles = inputs[1]
         #Processing 2D Feature
         v_embd = self.Vembedding(contactMap)
         l_embd = self.Lembedding(smiles)

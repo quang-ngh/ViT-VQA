@@ -9,9 +9,8 @@ import numpy as np
 
 
 class MHSADrugVQA(tf.keras.models.Model):
-    def __init__(self, num_layers, num_heads, Dim, hidden_dim, dropout, patch_size, mcb_dim = 800, n_chars=247, norm_coff = 1e-12):
+    def __init__(self, num_layers, num_heads, Dim, hidden_dim, dropout, patch_size, n_chars, norm_coff, mcb_dim = 800):
         super(MHSADrugVQA, self).__init__()
-        self.Vembedding = PatchesEmbedding(patch_size, Dim)
         self.encoderV = Encoder(num_layers_encoder=num_layers,
                                 num_heads = num_heads,
                                 Dim = Dim,
@@ -32,7 +31,8 @@ class MHSADrugVQA(tf.keras.models.Model):
         ]
         )
         self.Lembedding = tf.keras.layers.Embedding(n_chars, Dim)
-        self.flatten = tf.keras.layers.Flatten()
+        self.Vembedding = PatchesEmbedding(patch_size, Dim)
+        
         self.h_vector = np.random.random_integers(low = 0, high = mcb_dim, size = (1,Dim))
         self.s_vector = np.random.choice([1.0,-1.0], size = (1,Dim))
         
@@ -50,12 +50,15 @@ class MHSADrugVQA(tf.keras.models.Model):
 
         output = tf.signal.fft2d(img_proj) * tf.signal.fft2d(seq_proj)
         output = tf.signal.irfft2d(output)
-        return output
+        return tf.Variable(output, dtype=tf.float32)
 
     def call(self, smiles, contactMap):
         #contactMap = inputs[0]
         #smiles = inputs[1]
         #Processing 2D Feature
+        smiles = tf.Variable(smiles, dtype=tf.float32)
+        contactMap = tf.Variable(contactMap, dtype = tf.float32)
+
         v_embd = self.Vembedding(contactMap)
         l_embd = self.Lembedding(smiles)
         
@@ -80,6 +83,7 @@ def create_model():
         hidden_dim=args["dense_units"],
         dropout=args["dropout"],
         patch_size=args["patch_size"],
-        norm_coff=args["norm_coff"]
+        norm_coff=args["norm_coff"],
+        n_chars=args["n_chars"]
     )
     return model

@@ -3,7 +3,7 @@ import json
 import numpy as np
 import re
 import tensorflow as tf
-from tensorflow import Variable
+
 
 def get_hypers_model():
     with open("./config.json") as f:
@@ -54,7 +54,7 @@ def pad_sequences(vectorized_seqs, seq_lengths, properties):
     #print("Shape of seq_tensor: {}".format(seq_tensor.shape))
     for idx, (seq, seq_len) in enumerate(zip(vectorized_seqs, seq_lengths)):
         seq_tensor[idx, :seq_len] = seq #Get the array of index in vocabulary
-    seq_tensor = tf.convert_to_tensor(seq_tensor, dtype=tf.float32)
+    seq_tensor = tf.convert_to_tensor(seq_tensor, dtype=tf.float64)
     # Sort tensors by their length
     seq_lengths.numpy().sort()
     seq_lengths = seq_lengths[::-1]
@@ -66,15 +66,15 @@ def pad_sequences(vectorized_seqs, seq_lengths, properties):
     target = np.zeros((1,2))
     target[0][tmp_properties] = 1.0
 
-    target = tf.convert_to_tensor(target, dtype=tf.float32)
+    target = tf.convert_to_tensor(target, dtype=tf.float64)
     
     # Return variables
     # DataParallel requires everything to be a Variable
     return create_variable(seq_tensor),create_variable(seq_lengths),create_variable(target)
 def pad_sequences_seq(vectorized_seqs, seq_lengths):
-    seq_tensor = tf.zeros((len(vectorized_seqs), seq_lengths.max()), dtype = tf.float32)
+    seq_tensor = tf.zeros((len(vectorized_seqs), seq_lengths.max()), dtype = tf.float64)
     for idx, (seq, seq_len) in enumerate(zip(vectorized_seqs, seq_lengths)):
-        seq_tensor[idx, :seq_len] = tf.convert_to_tensor(seq,dtype=tf.float32)
+        seq_tensor[idx, :seq_len] = tf.convert_to_tensor(seq,dtype=tf.float64)
 
     # Sort tensors by their length
     seq_lengths, perm_idx = seq_lengths.sort(0, descending=True)
@@ -143,7 +143,7 @@ def getSeqContactDict(contactPath,contactDictPath):# make a seq-contactMap dict
         seq,contactMap = getProtein(contactPath,contactMapName)
         contactmap_np = [list(map(float, x.strip(' ').split(' '))) for x in contactMap]
         feature2D = np.expand_dims(contactmap_np, axis=0)
-        feature2D = tf.convert_to_tensor(feature2D, dtype=tf.float32) #Shape = [1,H,W]
+        feature2D = tf.convert_to_tensor(feature2D, dtype=tf.float64) #Shape = [1,H,W]
         seqContactDict[seq] = feature2D
     return seqContactDict
 def getLetters(path):

@@ -15,7 +15,7 @@ class Patches(tf.keras.layers.Layer):
             strides = [1, self.patches_size, self.patches_size,1],
             padding = "VALID"
         )
-        print("Before reshape {}".format(patches.shape))
+        
         dimension = patches.shape[-1]
         
         patches = tf.reshape(patches, (batch_size, -1, dimension))
@@ -60,4 +60,21 @@ class PatchesEmbedding(tf.keras.layers.Layer):
         patches_encoded = patches_encoded + self.pos_embedding
         #print("Shape {}".format(patches_encoded.shape))
         return patches_encoded
-        
+
+class Smiles_Embedding(tf.keras.layers.Embedding):
+    def __init__(self, n_char, hidden_dim):
+        super(Smiles_Embedding, self).__init__(n_char, hidden_dim)
+        self.n_char = n_char
+        self.hidden_dim = hidden_dim
+        self.embd = tf.keras.layers.Embedding(n_char, hidden_dim)
+        self.s_cls_token = self.add_weight(
+            name = "string_cls_token",
+            shape = [1,1,hidden_dim],
+            initializer = tf.keras.initializers.RandomNormal(),
+            dtype = tf.float32
+        )
+
+    def call(self, inputs):
+        output = self.embd(inputs)
+        output = tf.concat([self.s_cls_token, output], axis = 1)
+        return output

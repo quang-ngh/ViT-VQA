@@ -29,14 +29,16 @@ class MHSABlock(tf.keras.layers.Layer):
         self.layerNormFC = tf.keras.layers.LayerNormalization(epsilon = norm_coff)
     
     def call(self, inputs):
+        
         norm_attention = self.layerNormAtt(inputs) #Pass by layer norm
         
-        attention = self.attention(query = norm_attention, value = norm_attention) # Pass by Multihead attention
+        attention = self.attention(query = norm_attention, value = norm_attention, key = norm_attention) # Pass by Multihead attention
+        
         attention += inputs #Skip connection
         
         output = self.layerNormFC(attention) # Pass by layer norm 
-        output = self.FC(output) # Pass by fully connected 
-        
+        output += attention
+        output = self.FC(attention) # Pass by fully connected 
         output += attention # Skip connection
         return output
 

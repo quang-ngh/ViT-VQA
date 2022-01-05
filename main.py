@@ -35,9 +35,7 @@ def train(model):
                 loss =loss_obj(y, logits)
 
             grads = tape.gradient(loss, model.trainable_variables, unconnected_gradients='zero')
-            #print(grads)
-            if grads is None:
-                grads 
+        
             optimizer.apply_gradients((grads, var) for (grads, var) in zip(grads, model.trainable_variables))
             epoch_loss_avg.update_state(loss)
             if batch % 10:

@@ -70,9 +70,9 @@ class PatchesEmbedding(tf.keras.layers.Layer):
         #print("Shape {}".format(patches_encoded.shape))
         return patches_encoded
 
-class Smiles_Embedding(tf.keras.layers.Embedding):
+class Smiles_Embedding(tf.keras.layers.Layer):
     def __init__(self, n_char, hidden_dim):
-        super(Smiles_Embedding, self).__init__(n_char, hidden_dim)
+        super(Smiles_Embedding, self).__init__()
         self.n_char = n_char
         self.hidden_dim = hidden_dim
         self.embd = tf.keras.layers.Embedding(n_char, hidden_dim, name = "smiles_embd")
@@ -87,7 +87,9 @@ class Smiles_Embedding(tf.keras.layers.Embedding):
         input_shape = inputs.shape[1]
         inputs = tf.keras.layers.ZeroPadding1D(padding = (0,256-input_shape))(inputs)
         inputs = tf.reshape(inputs, (1,inputs.shape[1]))
-        print("Shape of string inp: {}".format(tf.shape(inputs)))
+        #print("Shape of string inp: {}".format(tf.shape(inputs)))
         output = self.embd(inputs)
-        output = tf.concat([self.s_cls_token, output], axis = 1)
+        tmp_cls = tf.cast(tf.broadcast_to(self.s_cls_token, [tf.shape(inputs)[0],1,tf.shape(output)[-1]]),
+                            dtype = tf.float32)
+        output = tf.concat([tmp_cls, output], axis = 1)
         return output

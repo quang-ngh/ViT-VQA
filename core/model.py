@@ -37,8 +37,8 @@ class MHSADrugVQA(tf.keras.models.Model):
             tf.keras.layers.Dense(units = 2, activation = 'softmax')
         ]
         )
-        self.flatten = tf.keras.layers.Flatten()
-        self.dense = tf.keras.layers.Dense(units = 2, activation = 'softmax')
+        #self.flatten = tf.keras.layers.Flatten()
+        #self.dense = tf.keras.layers.Dense(units = 2, activation = 'softmax')
         #self.poolV = tf.keras.layers.MaxPool2D()
 
         
@@ -66,28 +66,29 @@ class MHSADrugVQA(tf.keras.models.Model):
         smiles = tf.Variable(smiles, dtype=tf.float32)
         contactMap = tf.Variable(contactMap, dtype = tf.float32)
         smiles = tf.reshape(smiles, (1,tf.shape(smiles)[-1],1))
-        
+
         v_embd = self.Vembedding(contactMap)
         l_embd = self.Lembedding(smiles)
-        
+        #print("Shape of inp V: {}".format(tf.shape(v_embd)))
+        #print("Shape of inp L: {}".format(tf.shape(l_embd)))
         img_rep = self.encoderV(v_embd) #Shape = [batch_size, Dim] 
         seq_rep = self.encoderL(l_embd)
         
-        img_vec = img_rep[:,0]#self.flatten(img_rep)
-        seq_vec = seq_rep[:, 0]#self.flatten(seq_rep)
+        #img_vec = img_rep[:,0]#self.flatten(img_rep)
+        #seq_vec = seq_rep[:, 0]#self.flatten(seq_rep)
         #img_vec = tf.reshape(tf.nn.max_pool1d(img_rep, ksize = (img_rep.shape[1]), strides = 1, padding = "VALID"), (1,-1)) #add batch_size 
         #seq_vec = tf.reshape(tf.nn.max_pool1d(seq_rep, ksize=(seq_rep.shape[1]), strides = 1, padding = "VALID"), (1,-1)) #add batch_size
         
 
-        #img_vec = img_rep[:, 0]
-        #seq_vec = seq_rep[:, 0]
-        print("Shape: {}".format(tf.shape(img_vec)))
-        print("Shape: {}".format(tf.shape(seq_vec)))
+        img_vec = img_rep[:, 0]
+        seq_vec = seq_rep[:, 0]
+        #print("Shape: {}".format(tf.shape(img_vec)))
+        #print("Shape: {}".format(tf.shape(seq_vec)))
         #mcb_output = self.MCB(img_vec, seq_vec)
         mcb_output = tf.concat([img_vec, seq_vec], axis = 1)
-        print("Inp shape : {}".format(tf.shape(mcb_output)))
+        #print("Inp shape : {}".format(tf.shape(mcb_output)))
         output = self.classifier(mcb_output)
-        #output = self.dense()
+        
 
         return output
 

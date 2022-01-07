@@ -8,11 +8,11 @@
     },
     "model":
     {
-        "num_layers": 2,
+        "num_layers": 3,
         "num_head": 5,
         "dropout": 0.1, 
-        "norm_coff": 1e-5,
-        "dense_units": 32,
+        "norm_coff": 1e-10,
+        "dense_units": 256,
         "dimension": 800,
         "patch_size": 16,
         "n_chars": 247

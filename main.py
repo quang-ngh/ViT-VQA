@@ -6,13 +6,14 @@ import random
 from dataTF import *
 from utils import *
 import matplotlib.pyplot as plt
+import tensorflow_addons as tfa
 
 EPOCHS = 30
 train_loss = []
 model = create_model()
 
 def train(model):
-    optimizer = tf.keras.optimizers.Adam(learning_rate = 0.001)
+    optimizer = tfa.optimizers.AdamW(learning_rate = 0.001, weight_decay = 1e-4)
     loss_obj = tf.keras.losses.CategoricalCrossentropy()
     dataset = get_data_train(trainDataSet, seqContactDict)
 

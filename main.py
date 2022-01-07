@@ -28,26 +28,28 @@ def train(model):
             """
             contactMap = np.reshape(contactMap, (1,contactMap.shape[1], contactMap.shape[-1],1))
             contactMap_size = tf.shape(contactMap)[1]
-            #print("Shape before padding: {}".format(tf.shape(contactMap)))
+           
             #Fixed: Pass a fixed size variabels
             contactMap = tf.keras.layers.ZeroPadding2D(padding = ((0,800-contactMap_size), (0, 800-contactMap_size)), data_format = 'channels_last')(contactMap) 
             smiles, length, y = make_variables([lines], proper, smiles_letters)
             smiles = tf.reshape(smiles, [1, smiles.shape[-1]])
             
             with tf.GradientTape() as tape:
-                logits = model(smiles, contactMap, training=True) #Prediction
-                #print("Predict :{} - Actual: {}".format(np.argmax(logits), np.argmax(y)))
+                logits = model(smiles, contactMap, training=True) 
+                
                 loss =loss_obj(y, logits)
 
-            grads = tape.gradient(loss, model.trainable_variables)#, unconnected_gradients='zero') #Update Weightes
+            grads = tape.gradient(loss, model.trainable_variables)
         
             optimizer.apply_gradients((grads, var) for (grads, var) in zip(grads, model.trainable_variables))
             
             epoch_loss_avg.update_state(loss)
-            if batch % 10:
-                print("Loss: {}".format(epoch_loss_avg.result()))
+            if batch % 1000:
+                print("Loss: {} -- After {}".format(epoch_loss_avg.result(), batch))
                 
         train_loss.append(epoch_loss_avg.result())
+        plt.plot(train_loss)
+        plt.show()
             
 train(model)   
 #datasets = get_data_train(trainDataSet, seqContactDict)

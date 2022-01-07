@@ -8,7 +8,7 @@ class FC(tf.keras.layers.Layer):
         for num_of_units in dense_layers:
             layers.extend(
                 [tf.keras.layers.Dense(units = num_of_units, activation = activation),
-                tf.keras.layers.Dropout(0.1)]
+                tf.keras.layers.Dropout(dropout)]
             )
         
         self.FC = tf.keras.Sequential(layers)
@@ -22,24 +22,31 @@ class MHSABlock(tf.keras.layers.Layer):
         super(MHSABlock, self).__init__()
         
         self.attention = tf.keras.layers.MultiHeadAttention(
-            num_heads = num_heads, key_dim = Dim, dropout = dropout
+            num_heads = num_heads, key_dim = Dim, dropout = dropout, name = "multihead_attention"
         )
         self.FC = FC(hidden_layers, dropout)
-        self.layerNormAtt = tf.keras.layers.LayerNormalization(epsilon = norm_coff)
-        self.layerNormFC = tf.keras.layers.LayerNormalization(epsilon = norm_coff)
-    
+        self.layerNormAtt = tf.keras.layers.LayerNormalization(epsilon = norm_coff, name = "layer_norm_att")
+        self.layerNormFC = tf.keras.layers.LayerNormalization(epsilon = norm_coff, name = "layer_norm_fc")
+        
+        self.wkey = tf.keras.layers.Dense(units = Dim, activation = 'tanh', name = "wkey")
+        self.wquery = tf.keras.layers.Dense(units = Dim, activation = 'tanh', name = "wquery")
+        self.wvalue = tf.keras.layers.Dense(units = Dim, activation = 'tanh', name = "wvalue")
+        
     def call(self, inputs):
         
-        norm_attention = self.layerNormAtt(inputs) #Pass by layer norm
+        norm_attention = self.layerNormAtt(inputs) #Pass by layer norm 
+
+        key, query, value = self.wkey(norm_attention), self.wquery(norm_attention), self.wvalue(norm_attention)
         
-        attention = self.attention(query = norm_attention, value = norm_attention, key = norm_attention) # Pass by Multihead attention
+        attention = self.attention(query = query, value = value, key = key) # Pass by Multihead attention
         
         attention += inputs #Skip connection
         
         output = self.layerNormFC(attention) # Pass by layer norm 
-        output += attention
         output = self.FC(attention) # Pass by fully connected 
+        
         output += attention # Skip connection
+
         return output
 
 class Encoder(tf.keras.layers.Layer):
@@ -54,7 +61,7 @@ class Encoder(tf.keras.layers.Layer):
                     dropout = dropout,
                     norm_coff=norm_coff
                 )
-                for _ in range(num_layers_encoder)
+                for _ in range(num_layers_encoder)       
             ]
         )
     def call(self, inputs, *args, **kwargs):

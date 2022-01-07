@@ -23,6 +23,11 @@ class Patches(tf.keras.layers.Layer):
         return patches
 
 class PatchesEmbedding(tf.keras.layers.Layer):
+    """
+    Input: 
+        Feature 2D: a tensor 4D [batch_size, height, width, channels]
+        Output: Patches embedding --> a tensor 4D [batch_size, num_patches, num_patches, H*W]
+    """
     def __init__(self, patch_size, hidden_dim):
         super(PatchesEmbedding, self).__init__()
         
@@ -40,6 +45,10 @@ class PatchesEmbedding(tf.keras.layers.Layer):
         
     
     def call(self, contactMap):
+        
+        #Padding ContactMap
+        #print("Shape of 2D: {}".format(tf.shape(contactMap)))
+        #print("Shape before padding: {}".format(tf.shape(contactMap)))
         contactMap_size = tf.shape(contactMap)[0]
         self.num_patches = (contactMap_size // self.patches_size) ** 2
         self.pos_embedding = self.add_weight(
@@ -66,7 +75,7 @@ class Smiles_Embedding(tf.keras.layers.Embedding):
         super(Smiles_Embedding, self).__init__(n_char, hidden_dim)
         self.n_char = n_char
         self.hidden_dim = hidden_dim
-        self.embd = tf.keras.layers.Embedding(n_char, hidden_dim)
+        self.embd = tf.keras.layers.Embedding(n_char, hidden_dim, name = "smiles_embd")
         self.s_cls_token = self.add_weight(
             name = "string_cls_token",
             shape = [1,1,hidden_dim],
@@ -75,6 +84,10 @@ class Smiles_Embedding(tf.keras.layers.Embedding):
         )
 
     def call(self, inputs):
+        input_shape = inputs.shape[1]
+        inputs = tf.keras.layers.ZeroPadding1D(padding = (0,256-input_shape))(inputs)
+        inputs = tf.reshape(inputs, (1,inputs.shape[1]))
+        print("Shape of string inp: {}".format(tf.shape(inputs)))
         output = self.embd(inputs)
         output = tf.concat([self.s_cls_token, output], axis = 1)
         return output

@@ -31,7 +31,7 @@ def train(model):
             contactMap_size = tf.shape(contactMap)[1]
         
             #Fixed: Pass a fixed size variabels
-            contactMap = tf.keras.layers.ZeroPadding2D(padding = ((0,800-contactMap_size), (0, 800-contactMap_size)), data_format = 'channels_last')(contactMap) 
+            contactMap = tf.keras.layers.ZeroPadding2D(padding = ((0,810-contactMap_size), (0, 810-contactMap_size)), data_format = 'channels_last')(contactMap) 
             smiles, length, y = make_variables([lines], proper, smiles_letters)
             smiles = tf.reshape(smiles, [1, smiles.shape[-1]])
             

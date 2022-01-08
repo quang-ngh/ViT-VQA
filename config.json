@@ -8,13 +8,13 @@
     },
     "model":
     {
-        "num_layers": 3,
+        "num_layers": 5,
         "num_head": 5,
         "dropout": 0.1, 
         "norm_coff": 1e-10,
         "dense_units": 256,
         "dimension": 800,
-        "patch_size": 16,
+        "patch_size": 32,
         "n_chars": 247
     }
 }

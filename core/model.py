@@ -32,7 +32,7 @@ class MHSADrugVQA(tf.keras.models.Model):
 
         self.classifier = tf.keras.Sequential([
             tf.keras.layers.LayerNormalization(epsilon = norm_coff),
-            tf.keras.layers.Dense(units = hidden_dim),
+            tf.keras.layers.Dense(units = hidden_dim, activation = 'tanh'),
             tf.keras.layers.Dropout(rate = dropout),
             tf.keras.layers.Dense(units = 2, activation = 'softmax')
         ]

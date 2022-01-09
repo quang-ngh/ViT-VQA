@@ -31,7 +31,7 @@ def train(model):
             contactMap_size = tf.shape(contactMap)[1]
         
             #Fixed: Pass a fixed size variabels
-            contactMap = tf.keras.layers.ZeroPadding2D(padding = ((0,810-contactMap_size), (0, 810-contactMap_size)), data_format = 'channels_last')(contactMap) 
+            contactMap = tf.keras.layers.ZeroPadding2D(padding = ((0,1024-contactMap_size), (0, 1024-contactMap_size)), data_format = 'channels_last')(contactMap) 
             smiles, length, y = make_variables([lines], proper, smiles_letters)
             smiles = tf.reshape(smiles, [1, smiles.shape[-1]])
             
@@ -45,7 +45,7 @@ def train(model):
             optimizer.apply_gradients((grads, var) for (grads, var) in zip(grads, model.trainable_variables))
             
             epoch_loss_avg.update_state(loss)
-            if batch % 100 == 0:
+            if batch % 1 == 0:
                 print("Loss: {} -- After {}".format(epoch_loss_avg.result(), batch))
                 
         train_loss.append(epoch_loss_avg.result())

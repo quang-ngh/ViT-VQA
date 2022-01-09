@@ -7,6 +7,30 @@ from core.encode import *
 from utils import *
 import numpy as np
 
+class MCB(tf.keras.layers.Layer):
+    def __init__(self, h_vec, s_vec):
+        super(MCB, self).__init__()
+        self.h_vec = h_vec
+        self.s_vec = s_vec
+    
+    def call(self, img_vec, seq_vec):
+        #for i in range(img_vec.shape[-1]):
+        #    index = self.h_vec[0][i]
+        #    img_vec[0][index] = self.s_vec[0][i] * img_vec[0][i]
+        #for i in range(seq_vec.shape[-1]):
+        #    index = self.h[0][i]
+        #    seq_vec[0][index] = self.s_vec[0][i] * seq_vec[0][i]
+        
+        img_vec_fft = tf.cast(img_vec, dtype = tf.complex64)
+        seq_vec_fft = tf.cast(seq_vec, dtype = tf.complex64)
+        img_vec_fft = tf.signal.fft2d(img_vec_fft)
+        seq_vec_fft = tf.signal.fft2d(seq_vec_fft)
+
+        output = img_vec_fft * seq_vec_fft
+        output = tf.signal.irfft2d(output)
+        output = tf.math.l2_normalize(output, epsilon = 1e-3)
+        
+        return output
 
 class MHSADrugVQA(tf.keras.models.Model):
     def __init__(self, num_layers, num_heads, Dim, hidden_dim, dropout, patch_size, n_chars, norm_coff, mcb_dim = 800):
@@ -37,28 +61,10 @@ class MHSADrugVQA(tf.keras.models.Model):
             tf.keras.layers.Dense(units = 2, activation = 'softmax')
         ]
         )
+        self.mcb = MCB(self.h_vector, self.s_vector)
         #self.flatten = tf.keras.layers.Flatten()
         #self.dense = tf.keras.layers.Dense(units = 2, activation = 'softmax')
         #self.poolV = tf.keras.layers.MaxPool2D()
-
-        
-    def CS_projection(self,v,dim):
-        projection = np.zeros((1,dim), dtype=np.float32)
-        
-        for i in range(dim):
-            
-            projection[0][self.h_vector[0][i]] = projection[0][self.h_vector[0][i]] + self.s_vector[0][i]*v[0][i]
-        return tf.convert_to_tensor(projection, dtype=tf.float32)
-    
-    def MCB(self,img_vec, seq_vec):
-
-        img_proj = tf.cast(self.CS_projection(img_vec, dim=img_vec.shape[-1]), dtype=tf.complex64)
-        seq_proj = tf.cast(self.CS_projection(seq_vec, seq_vec.shape[-1]), dtype=tf.complex64)
-
-        output = tf.signal.fft2d(img_proj) * tf.signal.fft2d(seq_proj)
-        output = tf.signal.irfft2d(output)
-        
-        return tf.Variable(output, dtype=tf.float32)
 
     def call(self, smiles, contactMap):
         
@@ -82,10 +88,11 @@ class MHSADrugVQA(tf.keras.models.Model):
 
         img_vec = img_rep[:, 0]
         seq_vec = seq_rep[:, 0]
-        #print("Shape: {}".format(tf.shape(img_vec)))
-        #print("Shape: {}".format(tf.shape(seq_vec)))
-        #mcb_output = self.MCB(img_vec, seq_vec)
-        mcb_output = tf.concat([img_vec, seq_vec], axis = 1)
+        print("Shape: {}".format(tf.shape(img_vec)))
+        print("Shape: {}".format(tf.shape(seq_vec)))
+        mcb_output = self.mcb(img_vec, seq_vec)
+        #print("Shape of mcb output: {}".format(tf.shape(mcb_output)))
+        #mcb_output = tf.concat([img_vec, seq_vec], axis = 1)
         #print("Inp shape : {}".format(tf.shape(mcb_output)))
         output = self.classifier(mcb_output)
         

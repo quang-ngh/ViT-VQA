@@ -1,3 +1,4 @@
+from math import e
 from random import random, uniform
 import tensorflow as tf
 from tensorflow.python.framework.tensor_shape import Dimension
@@ -10,26 +11,39 @@ import numpy as np
 class MCB(tf.keras.layers.Layer):
     def __init__(self, h_vec, s_vec):
         super(MCB, self).__init__()
-        self.h_vec = tf.reshape(h_vec, (h_vec.shape[-1],))
-        self.s_vec = tf.reshape(s_vec, (s_vec.shape[-1],))
-
-    def call(self, img_vec, seq_vec):
-        indices_img = np.concatenate((np.arange(img_vec.shape[-1])[..., np.newaxis],
+        self.h_vec = tf.cast(tf.reshape(h_vec, (h_vec.shape[-1],)), dtype=tf.float32)
+        self.s_vec = tf.cast(tf.reshape(s_vec, (s_vec.shape[-1],)), dtype=tf.float32)
+        
+    def call(self, img_vec, seq_vec, output_dim):
+        img_shape = img_vec.shape[-1]
+        seq_shape = seq_vec.shape[-1]
+        indices_img = np.concatenate((np.arange(img_shape)[..., np.newaxis],
                               self.h_vec[..., np.newaxis]), axis=1)
         
-        indices_seq = np.concatenate((np.arange(seq_vec.shape[-1])[..., np.newaxis],
+        indices_seq = np.concatenate((np.arange(seq_shape)[..., np.newaxis],
                               self.h_vec[..., np.newaxis]), axis=1)
         
-        img_vec = img_vec @ indices_img #Sketch from Count Sketch projection for Feature 2D
-        seq_vec = seq_vec @ indices_seq
+        sketch_seq = tf.sparse.reorder(
+            tf.SparseTensor(indices_seq, self.s_vec,[seq_vec.shape[-1], output_dim])
+        )
+        
+        sketch_img = tf.sparse.reorder(
+            tf.SparseTensor(indices_img, self.s_vec,[seq_vec.shape[-1],output_dim])
+        )
 
-        img_vec_fft = tf.cast(img_vec, dtype = tf.complex64)
-        seq_vec_fft = tf.cast(seq_vec, dtype = tf.complex64)
-        img_vec_fft = tf.signal.fft2d(img_vec_fft)
-        seq_vec_fft = tf.signal.fft2d(seq_vec_fft)
+        img_flat = tf.reshape(img_vec, [-1, img_shape])
+        seq_flat = tf.reshape(seq_vec, [-1, seq_shape])
 
-        output = img_vec_fft * seq_vec_fft
-        output = tf.signal.irfft2d(output)
+        #Vector represent for count sketch projection of feature 2D and string inputs
+        img_vec = tf.transpose(tf.sparse.sparse_dense_matmul(sketch_img, img_flat, adjoint_a = True, adjoint_b = True))
+        seq_vec = tf.transpose(tf.sparse.sparse_dense_matmul(sketch_seq, seq_flat, adjoint_a = True, adjoint_b = True))
+
+        fft_img = tf.signal.fft(tf.complex(real = img_vec, imag = tf.zeros_like(img_vec)))
+        fft_seq = tf.signal.fft(tf.complex(real = seq_vec, imag = tf.zeros_like(seq_vec)))
+
+        output = tf.multiply(fft_img, fft_seq)
+    
+        output = tf.math.real(tf.signal.ifft(output))
         output = tf.math.l2_normalize(output, epsilon = 1e-5)
         
         return output
@@ -54,9 +68,11 @@ class MHSADrugVQA(tf.keras.models.Model):
         self.Vembedding = PatchesEmbedding(patch_size, Dim)
         
         self.h_vector = tf.random.uniform(shape = (1,Dim), minval=0, maxval=mcb_dim)
-        self.s_vector = tf.random.uniform(shape = (1,Dim), minval=0, maxval=1)
+        self.s_vector = tf.random.uniform(shape = (1,Dim), minval=0, maxval=2)
         self.h_vector = tf.cast(self.h_vector, tf.int32)
+        #print("h vec: {}".format(self.h_vector))
         self.s_vector = tf.cast(tf.floor(self.s_vector)*2-1, tf.int32)
+        #asprint("S vec: {}".format(self.s_vector))
 
         self.classifier = tf.keras.Sequential([
             tf.keras.layers.LayerNormalization(epsilon = norm_coff),
@@ -85,7 +101,7 @@ class MHSADrugVQA(tf.keras.models.Model):
 
         img_vec = img_rep[:, 0]
         seq_vec = seq_rep[:, 0]
-        mcb_output = self.mcb(img_vec, seq_vec)
+        mcb_output = self.mcb(img_vec, seq_vec, 2048)
         output = self.classifier(mcb_output)
         
 

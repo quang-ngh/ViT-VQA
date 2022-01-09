@@ -15,6 +15,9 @@
         "dense_units": 256,
         "dimension": 1024,
         "patch_size": 32,
-        "n_chars": 247
+        "n_chars": 247,
+        "size_2D": 1024,
+        "size_1D":256,
+        "output_mcb_dim": 2048
     }
 }

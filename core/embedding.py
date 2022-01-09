@@ -84,9 +84,6 @@ class Smiles_Embedding(tf.keras.layers.Layer):
         )
 
     def call(self, inputs):
-        input_shape = inputs.shape[1]
-        inputs = tf.keras.layers.ZeroPadding1D(padding = (0,256-input_shape))(inputs)
-        inputs = tf.reshape(inputs, (1,inputs.shape[1]))
         #print("Shape of string inp: {}".format(tf.shape(inputs)))
         output = self.embd(inputs)
         tmp_cls = tf.cast(tf.broadcast_to(self.s_cls_token, [tf.shape(inputs)[0],1,tf.shape(output)[-1]]),

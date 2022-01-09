@@ -9,24 +9,31 @@ from utils import *
 import numpy as np
 
 class MCB(tf.keras.layers.Layer):
-    def __init__(self, h_vec, s_vec):
+    def __init__(self, h_vec, s_vec, output_dim):
         super(MCB, self).__init__()
         self.h_vec = tf.cast(tf.reshape(h_vec, (h_vec.shape[-1],)), dtype=tf.float32)
         self.s_vec = tf.cast(tf.reshape(s_vec, (s_vec.shape[-1],)), dtype=tf.float32)
-        
-    def call(self, img_vec, seq_vec, output_dim):
+        self.output_dim = output_dim
+
+    def call(self, img_vec, seq_vec):
+        output_dim = self.output_dim
         img_shape = img_vec.shape[-1]
         seq_shape = seq_vec.shape[-1]
+        
+        #for i in range(output_dim)
+        #projection[h[i]] = s_vec[i]*vec_passed[i]
         indices_img = np.concatenate((np.arange(img_shape)[..., np.newaxis],
                               self.h_vec[..., np.newaxis]), axis=1)
         
         indices_seq = np.concatenate((np.arange(seq_shape)[..., np.newaxis],
                               self.h_vec[..., np.newaxis]), axis=1)
         
+        print(indices_img)
+
         sketch_seq = tf.sparse.reorder(
             tf.SparseTensor(indices_seq, self.s_vec,[seq_vec.shape[-1], output_dim])
         )
-        
+                
         sketch_img = tf.sparse.reorder(
             tf.SparseTensor(indices_img, self.s_vec,[seq_vec.shape[-1],output_dim])
         )
@@ -35,13 +42,14 @@ class MCB(tf.keras.layers.Layer):
         seq_flat = tf.reshape(seq_vec, [-1, seq_shape])
 
         #Vector represent for count sketch projection of feature 2D and string inputs
+        #After projection
         img_vec = tf.transpose(tf.sparse.sparse_dense_matmul(sketch_img, img_flat, adjoint_a = True, adjoint_b = True))
         seq_vec = tf.transpose(tf.sparse.sparse_dense_matmul(sketch_seq, seq_flat, adjoint_a = True, adjoint_b = True))
 
         fft_img = tf.signal.fft(tf.complex(real = img_vec, imag = tf.zeros_like(img_vec)))
         fft_seq = tf.signal.fft(tf.complex(real = seq_vec, imag = tf.zeros_like(seq_vec)))
 
-        output = tf.multiply(fft_img, fft_seq)
+        output = tf.multiply(fft_img, fft_seq) #Element-wise product
     
         output = tf.math.real(tf.signal.ifft(output))
         output = tf.math.l2_normalize(output, epsilon = 1e-5)

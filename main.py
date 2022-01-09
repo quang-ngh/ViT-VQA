@@ -7,6 +7,7 @@ from dataTF import *
 from utils import *
 import matplotlib.pyplot as plt
 import tensorflow_addons as tfa
+from tqdm import tqdm
 
 EPOCHS = 30
 train_loss = []
@@ -21,7 +22,7 @@ def train(model):
     for epoch in range(EPOCHS):
         epoch_loss_avg = tf.keras.metrics.Mean()
         print(epoch)
-        for batch, (lines, contactMap, proper) in enumerate(dataset):
+        for lines, contactMap, proper in tqdm(dataset):
             """
             Input to model: 
             String: Smiles --> shape = [1,x]
@@ -45,8 +46,8 @@ def train(model):
             optimizer.apply_gradients((grads, var) for (grads, var) in zip(grads, model.trainable_variables))
             
             epoch_loss_avg.update_state(loss)
-            if batch % 1 == 0:
-                print("Loss: {} -- After {}".format(epoch_loss_avg.result(), batch))
+            #if batch % 10 == 0:
+            #    print("Loss: {} -- After {} points".format(epoch_loss_avg.result(), batch))
                 
         train_loss.append(epoch_loss_avg.result())
         plt.plot(train_loss)

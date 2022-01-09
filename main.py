@@ -9,6 +9,7 @@ import matplotlib.pyplot as plt
 #import tensorflow_addons as tfa
 from tqdm import tqdm
 
+#Newest version updated on 10/1/21
 EPOCHS = 30
 train_loss = []
 model = create_model()

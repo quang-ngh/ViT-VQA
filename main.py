@@ -10,7 +10,7 @@ import matplotlib.pyplot as plt
 from tqdm import tqdm
 from sklearn import metrics
 import pickle
-from test import *
+
 #Newest version updated on 10/1/21
 
 EPOCHS = 30
@@ -49,7 +49,50 @@ def train(model):
             
             epoch_loss_avg.update_state(loss)
         print("Loss after {} epochs : {}".format(epoch, epoch_loss_avg.result()))
-        testModel(model, epoch)
+        metric = {}
+        for x in testProteinList:
+            pred = []
+            actual = []
+            #Preparing data for Testing
+            print("Current Testing -->", x.split('_')[0])
+            data = dataDict[x]
+            test_loader = get_data_test(data, seqContactDict)
+
+            #Testing phase
+            print("Starting Testing...")
+            for lines, contactMap, proper in tqdm(test_loader):
+                smiles, length, y = make_variables([lines], proper, smiles_letters)
+                smiles = tf.reshape(smiles, [1, smiles.shape[-1]])
+                
+                logits = model(smiles, contactMap)
+                #print("Predict: {} -- Actual: {}".format(np.argmax(logits), np.argmax(y)))
+                #print("Predict: {} -- Actual: {}".format((logits), (y)))
+                pred.append(np.argmax(logits))
+                actual.append(np.argmax(y))
+            
+            f1_score = metrics.f1_score(actual, pred)
+            recall = metrics.recall_score(actual, pred)
+            precision = metrics.precision_score(actual, pred)
+            acc = metrics.accuracy_score(actual, pred)
+            print("F1: {} -- Recall :{} -- Precision: {} -- Accuracy: {}".format(f1_score, recall, precision, acc))
+            metric['f1'] = f1_score
+            metric['precision'] = precision
+            metric['accuracy'] = acc
+            metric['recall'] = recall
+
+            print("Saving result...")
+            inFile = open("metric_epoch"+str(epoch)+str(x)+".pkl", mode = 'wb')
+            pickle.dump(metric, inFile)
+            inFile.close()
+            print("Saving Success!")
+
+            print("End...")
+            print("\n")
+            
+        
+        
+        
+        #testModel(model, epoch)
         """
             predict_list.append(np.argmax(logits))
             actual_list.append(np.argmax(y))

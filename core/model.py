@@ -5,7 +5,7 @@ from tensorflow.python.framework.tensor_shape import Dimension
 from tensorflow.python.ops.array_ops import zeros
 from core.embedding import *
 from core.encode import *
-from utils import *
+from utils import get_hypers_model
 import numpy as np
 
 class MCB(tf.keras.layers.Layer):
@@ -117,22 +117,22 @@ class MHSADrugVQA(tf.keras.models.Model):
         contactMap_size = contactMap.shape[1]
         contactMap = tf.keras.layers.ZeroPadding2D(padding = ((0,self.size_2d-contactMap_size), (0, self.size_2d-contactMap_size)), data_format = 'channels_last')(contactMap) 
         
-        #print("Init shape: Protein: {} ==== Ligand: {}".format(tf.shape(contactMap), tf.shape(smiles)))
+        print("Init shape: Protein: {} ==== Ligand: {}".format(tf.shape(contactMap), tf.shape(smiles)))
 
         v_embd = self.Vembedding(contactMap)
         l_embd = self.Lembedding(smiles)
 
-        #print("Init --> Embedding Shape: Protein: {} === Ligand: {}".format(tf.shape(v_embd), tf.shape(l_embd)))
+        print("Init --> Embedding Shape: Protein: {} === Ligand: {}".format(tf.shape(v_embd), tf.shape(l_embd)))
         
         img_rep = self.encoderV(v_embd) #Shape = [batch_size, Dim] 
         seq_rep = self.encoderL(l_embd)
 
         img_vec = img_rep[:, 0]
         seq_vec = seq_rep[:, 0]
-        #print("Vector dim: Protein: {} ==== Ligand: {}".format(tf.shape(img_vec), tf.shape(seq_vec)))
+        print("Vector dim: Protein: {} ==== Ligand: {}".format(tf.shape(img_vec), tf.shape(seq_vec)))
         mcb_output = self.mcb(img_vec, seq_vec)
 
-        #print("MCB pooling shape: {}".format(tf.shape(mcb_output)))
+        print("MCB pooling shape: {}".format(tf.shape(mcb_output)))
         output = self.classifier(mcb_output)
         
 

@@ -26,9 +26,10 @@ class DrugDataSet(tf.keras.utils.Sequence):
     def __len__(self):
         return self.len
 
-def get_data_train(dataSet, contactDictionary):
-    train_loader = DrugDataSet(dataSet, contactDictionary)
-    return train_loader
+def get_data_loader(dataSet, contactDictionary):
+    data_loader = DrugDataSet(dataSet, contactDictionary)
+    return data_loader
+
 
     
 

@@ -6,7 +6,7 @@ import random
 from dataTF import *
 from utils import *
 import matplotlib.pyplot as plt
-#import tensorflow_addons as tfa
+
 from tqdm import tqdm
 from sklearn import metrics
 import pickle
@@ -16,33 +16,31 @@ from test import *
 EPOCHS = 30
 train_loss = []
 model = create_model()
-#tf.config.experimental_run_functions_eagerly(True)
+
 
 def train(model):
     
     optimizer = tf.optimizers.Adam(learning_rate = 0.001)
     loss_obj = tf.keras.losses.CategoricalCrossentropy()
-    dataset = get_data_train(trainDataSet[:50], seqContactDict)
+    dataset = get_data_train(trainDataSet, seqContactDict)
     
     metric = {}
     for epoch in range(1,EPOCHS+1):
         predict_list, actual_list = [], []
         epoch_loss_avg = tf.keras.metrics.Mean()
-        print(epoch)
+        print("Epochs {}".format(epoch))
         
-        for batch, (lines, contactMap, proper) in tqdm(enumerate(dataset)):
+        for lines, contactMap, proper in tqdm(dataset):
             """
             Input to model: 
             String: Smiles --> shape = [1,x]
             Feature 2D: Contactmap --> Shape = [1, size, size, 1]
             """
-            
             smiles, length, y = make_variables([lines], proper, smiles_letters)
             smiles = tf.reshape(smiles, [1, smiles.shape[-1]])
             
             with tf.GradientTape() as tape:
                 logits = model(smiles, contactMap, training=True) 
-                
                 loss =loss_obj(y, logits)
 
             grads = tape.gradient(loss, model.trainable_variables)
@@ -50,7 +48,7 @@ def train(model):
             optimizer.apply_gradients((grads, var) for (grads, var) in zip(grads, model.trainable_variables))
             
             epoch_loss_avg.update_state(loss)
-            
+        print("Loss after {} epochs : {}".format(epoch, epoch_loss_avg.result()))
         testModel(model, epoch)
         """
             predict_list.append(np.argmax(logits))

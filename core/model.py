@@ -83,11 +83,11 @@ class MHSADrugVQA(tf.keras.models.Model):
 
         self.classifier = tf.keras.Sequential([
             tf.keras.layers.LayerNormalization(epsilon = norm_coff),
-            tf.keras.layers.Dense(units = self.output_dim, activation = 'relu'),
+            tf.keras.layers.Dense(units = 2048, activation = 'tanh'),
             tf.keras.layers.Dropout(rate = dropout),
-            tf.keras.layers.Dense(units = self.output_dim, activation = 'relu'),
+            tf.keras.layers.Dense(units = 1024, activation = 'tanh'),
             tf.keras.layers.Dropout(rate = dropout),
-            tf.keras.layers.Dense(units = self.output_dim, activation = 'relu'),
+            tf.keras.layers.Dense(units = 1024, activation = 'tanh'),
             tf.keras.layers.Dropout(rate = dropout),
             tf.keras.layers.Dense(units = 2, activation = 'softmax')
         ]
@@ -127,8 +127,8 @@ class MHSADrugVQA(tf.keras.models.Model):
         img_vec = img_rep[:, 0]
         seq_vec = seq_rep[:, 0]
         #print("Vector dim: Protein: {} ==== Ligand: {}".format(tf.shape(img_vec), tf.shape(seq_vec)))
-        mcb_output = self.mcb(img_vec, seq_vec)
-
+        #mcb_output = self.mcb(img_vec, seq_vec)
+        mcb_output = tf.concat([img_vec, seq_vec], axis = 1, name = "concat_vl")
         #print("MCB pooling shape: {}".format(tf.shape(mcb_output)))
         output = self.classifier(mcb_output)
         

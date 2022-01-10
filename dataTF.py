@@ -1,5 +1,4 @@
 import tensorflow as tf
-from utils import * 
 import random
 #[25921, [1,x], [1,H,W,1]]
 """

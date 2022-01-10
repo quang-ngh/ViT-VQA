@@ -30,6 +30,6 @@ def get_data_train(dataSet, contactDictionary):
     train_loader = DrugDataSet(dataSet, contactDictionary)
     return train_loader
 
-    
-
-
+def get_data_test(dataSet, contactDictionary):
+    test_loader = DrugDataSet(dataSet, contactDictionary)
+    return test_loader

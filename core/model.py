@@ -22,14 +22,19 @@ class MCB(tf.keras.layers.Layer):
         
         #for i in range(output_dim)
         #projection[h[i]] = s_vec[i]*vec_passed[i]
-        indices_img = np.concatenate((np.arange(img_shape)[..., np.newaxis],
-                              self.h_vec[..., np.newaxis]), axis=1)
+        #indices_img = np.concatenate((np.arange(img_shape)[..., np.newaxis],
+        #                      self.h_vec[..., np.newaxis]), axis=1)
         
-        indices_seq = np.concatenate((np.arange(seq_shape)[..., np.newaxis],
-                              self.h_vec[..., np.newaxis]), axis=1)
-
+        #indices_seq = np.concatenate((np.arange(seq_shape)[..., np.newaxis],
+        #                      self.h_vec[..., np.newaxis]), axis=1)
+        
+        indices_img = tf.cast(tf.concat([np.arange(img_shape)[..., np.newaxis],
+                              self.h_vec[..., np.newaxis]], axis=1), dtype=tf.int64)
+        
+        indices_seq = tf.cast(tf.concat([np.arange(seq_shape)[..., np.newaxis],
+                              self.h_vec[..., np.newaxis]], axis=1), dtype=tf.int64)
         sketch_seq = tf.sparse.reorder(
-            tf.SparseTensor(indices_seq, self.s_vec,[seq_vec.shape[-1], output_dim])
+            tf.SparseTensor(indices_seq, self.s_vec,[seq_vec.shape[-1], output_dim],)
         )
 
         sketch_img = tf.sparse.reorder(
@@ -74,12 +79,11 @@ class MHSADrugVQA(tf.keras.models.Model):
         self.size_2d = size_2D
         self.size_1d = size_1D
         self.output_dim = mcb_dim
+        
         self.h_vector = tf.random.uniform(shape = (1,Dim), minval=0, maxval=mcb_dim)
         self.s_vector = tf.random.uniform(shape = (1,Dim), minval=0, maxval=2)
         self.h_vector = tf.cast(self.h_vector, tf.int32)
-        #print("h vec: {}".format(self.h_vector))
         self.s_vector = tf.cast(tf.floor(self.s_vector)*2-1, tf.int32)
-        #asprint("S vec: {}".format(self.s_vector))
 
         self.classifier = tf.keras.Sequential([
             tf.keras.layers.LayerNormalization(epsilon = norm_coff),
@@ -93,16 +97,14 @@ class MHSADrugVQA(tf.keras.models.Model):
         ]
         )
         self.mcb = MCB(self.h_vector, self.s_vector, self.output_dim)
-        #self.flatten = tf.keras.layers.Flatten()
-        #self.dense = tf.keras.layers.Dense(units = 2, activation = 'softmax')
-        #self.poolV = tf.keras.layers.MaxPool2D()
+        
 
     def call(self, smiles, contactMap):
         
         #Processing 2D Feature
         #smiles = tf.Variable(smiles, dtype=tf.float32)
         #contactMap = tf.Variable(contactMap, dtype = tf.float32)
-        smiles = tf.reshape(smiles, (1,tf.shape(smiles)[-1],1))
+        smiles = tf.reshape(smiles, [1,tf.shape(smiles)[-1],1])
 
         #Padding SMILES STRING
         input_shape = smiles.shape[1]
@@ -110,10 +112,11 @@ class MHSADrugVQA(tf.keras.models.Model):
         smiles = tf.reshape(smiles, (1,smiles.shape[1]))
 
         #Padding Feature 2D
-        contactMap = np.reshape(contactMap, (1,contactMap.shape[1], contactMap.shape[-1],1))
-        contactMap_size = tf.shape(contactMap)[1]
+        
+        contactMap = tf.reshape(contactMap, [1,contactMap.shape[1], contactMap.shape[-1],1])
+        contactMap_size = contactMap.shape[1]
         contactMap = tf.keras.layers.ZeroPadding2D(padding = ((0,self.size_2d-contactMap_size), (0, self.size_2d-contactMap_size)), data_format = 'channels_last')(contactMap) 
-
+        
         #print("Init shape: Protein: {} ==== Ligand: {}".format(tf.shape(contactMap), tf.shape(smiles)))
 
         v_embd = self.Vembedding(contactMap)

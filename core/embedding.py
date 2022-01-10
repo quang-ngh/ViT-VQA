@@ -45,11 +45,7 @@ class PatchesEmbedding(tf.keras.layers.Layer):
         
     
     def call(self, contactMap):
-        
-        #Padding ContactMap
-        #print("Shape of 2D: {}".format(tf.shape(contactMap)))
-        #print("Shape before padding: {}".format(tf.shape(contactMap)))
-        contactMap_size = tf.shape(contactMap)[0]
+        contactMap_size = contactMap.shape[1]
         self.num_patches = (contactMap_size // self.patches_size) ** 2
         self.pos_embedding = self.add_weight(
             "pos_embd",
@@ -57,6 +53,10 @@ class PatchesEmbedding(tf.keras.layers.Layer):
             initializer = tf.keras.initializers.RandomNormal(),
             dtype = tf.float32
         )
+        #Padding ContactMap
+        #print("Shape of 2D: {}".format(tf.shape(contactMap)))
+        #print("Shape before padding: {}".format(tf.shape(contactMap)))
+        
         patches = self.patches(contactMap)
         patches_encoded = self.projection(patches)
         

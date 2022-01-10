@@ -133,7 +133,7 @@ def getTrainDataSet(trainFoldPath):
     return trainDataSet#[[smiles, sequence, interaction],.....]
 def getTestProteinList(testFoldPath):
     testProteinList = readLinesStrip(open(testFoldPath).readlines())[0].split()
-    return testProteinList#['kpcb_2i0eA_full','fabp4_2nnqA_full',....]
+    return testProteinList #['kpcb_2i0eA_full','fabp4_2nnqA_full',....]
 
 def getSeqContactDict(contactPath,contactDictPath):# make a seq-contactMap dict 
     contactDict = open(contactDictPath).readlines()
@@ -186,10 +186,12 @@ seqContactDict = getSeqContactDict(contactPath,contactDictPath)
 smiles_letters = getLetters(smileLettersPath)
 sequence_letters = getLetters(seqLettersPath)
 #count(trainFoldPath, contactDictPath)
-testProteinList = getTestProteinList(testFoldPath)# whole foldTest
+#testProteinList = getTestProteinList(testFoldPath)# whole foldTest
 #print("Test List: ", len(testProteinList))
 # testProteinList = ['kpcb_2i0eA_full']# a protein of fold1Test
+
 testProteinList = ['tryb1_2zebA_full','mcr_2oaxE_full', 'cxcr4_3oduA_full']# protein of fold3Test
+
 DECOY_PATH = './data/DUDE/decoy_smile'
 ACTIVE_PATH = './data/DUDE/active_smile'
 #print('get protein-seq dict....')

@@ -8,22 +8,29 @@ from utils import *
 import matplotlib.pyplot as plt
 #import tensorflow_addons as tfa
 from tqdm import tqdm
-
+from sklearn import metrics
+import pickle
+from test import *
 #Newest version updated on 10/1/21
+
 EPOCHS = 30
 train_loss = []
 model = create_model()
+#tf.config.experimental_run_functions_eagerly(True)
 
 def train(model):
     
     optimizer = tf.optimizers.Adam(learning_rate = 0.001)
     loss_obj = tf.keras.losses.CategoricalCrossentropy()
-    dataset = get_data_train(trainDataSet, seqContactDict)
-
-    for epoch in range(EPOCHS):
+    dataset = get_data_train(trainDataSet[:50], seqContactDict)
+    
+    metric = {}
+    for epoch in range(1,EPOCHS+1):
+        predict_list, actual_list = [], []
         epoch_loss_avg = tf.keras.metrics.Mean()
         print(epoch)
-        for lines, contactMap, proper in tqdm(dataset):
+        
+        for batch, (lines, contactMap, proper) in tqdm(enumerate(dataset)):
             """
             Input to model: 
             String: Smiles --> shape = [1,x]
@@ -43,12 +50,32 @@ def train(model):
             optimizer.apply_gradients((grads, var) for (grads, var) in zip(grads, model.trainable_variables))
             
             epoch_loss_avg.update_state(loss)
-            #if batch % 10 == 0:
-            print("Loss: {}".format(epoch_loss_avg.result()))
-                
-        train_loss.append(epoch_loss_avg.result())
-        plt.plot(train_loss)
-        plt.show()
+            
+        testModel(model, epoch)
+        """
+            predict_list.append(np.argmax(logits))
+            actual_list.append(np.argmax(y))
+            #model.save("model_batch"+str(epoch))
+            #saveModel = open("mymodel.pkl", mode = 'wb')
+            #pickle.dump(model, saveModel)
+            #saveModel.close()
+            #break
+            print("Testing....")
+            
+            print("Predict: {} -- Actual: {} =========== Loss: {}".format(np.argmax(logits),np.argmax(y),epoch_loss_avg.result()))
+            
+            metric['f1'] = metrics.f1_score(actual_list, predict_list)
+            metric['prec'] = metrics.precision_score(actual_list, predict_list)
+            metric['recall'] = metrics.recall_score(actual_list, predict_list)
+            metric['accuracy'] = metrics.accuracy_score(actual_list, predict_list)
+            print("Save metric")
+            inFile = open("metric_batch"+str(batch)+".pkl", mode= 'wb')
+            pickle.dump(metric, inFile)
+            inFile.close()
+            print("Save done")
+        #    train_loss.append(epoch_loss_avg.result())
+        """
+        
             
 train(model)   
 

@@ -19,7 +19,7 @@ def train(model):
     
     optimizer = tf.optimizers.Adam(learning_rate = 0.001)
     loss_obj = tf.keras.losses.CategoricalCrossentropy()
-    dataset = get_data_loader(trainDataSet[:1500], seqContactDict)
+    dataset = get_data_loader(trainDataSet[:10000], seqContactDict)
 
     for epoch in range(EPOCHS):
         epoch_loss_avg = tf.keras.metrics.Mean()
@@ -30,7 +30,9 @@ def train(model):
             String: Smiles --> shape = [1,x]
             Feature 2D: Contactmap --> Shape = [1, size, size, 1]
             """
+            #print("Image:")
             
+
             smiles, length, y = make_variables([lines], proper, smiles_letters)
             smiles = tf.reshape(smiles, [1, smiles.shape[-1]])
             
@@ -45,7 +47,7 @@ def train(model):
             
             epoch_loss_avg.update_state(loss)
             #if batch % 10 == 0:
-            print("Loss: {}".format(epoch_loss_avg.result()))
+            #print("Loss: {}".format(epoch_loss_avg.result()))
         metric = {}
         for x in testProteinList:
             pred = []
@@ -66,7 +68,8 @@ def train(model):
                 #print("Predict: {} -- Actual: {}".format((logits), (y)))
                 pred.append(np.argmax(logits))
                 actual.append(np.argmax(y))
-            
+            print("Actual: {}".format(actual))
+            print("Predict :{}".format(pred))
             f1_score = metrics.f1_score(actual, pred)
             recall = metrics.recall_score(actual, pred)
             precision = metrics.precision_score(actual, pred)

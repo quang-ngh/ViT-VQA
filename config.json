@@ -13,11 +13,11 @@
         "dropout": 0.1, 
         "norm_coff": 1e-10,
         "dense_units": 256,
-        "dimension": 1024,
+        "dimension": 512,
         "patch_size": 16,
         "n_chars": 247,
-        "size_2D": 1024,
+        "size_2D": 800,
         "size_1D":256,
-        "output_mcb_dim": 2048
+        "output_mcb_dim": 600
     }
 }

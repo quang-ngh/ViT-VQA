@@ -11,7 +11,8 @@ y_train = [...,[label],...]
 """
 class DrugDataSet(tf.keras.utils.Sequence):
     def __init__(self, dataset, seqcontactDict):
-        random.shuffle(dataset)
+        for i in range(5):
+            random.shuffle(dataset)
         self.dataSet = dataset
         self.dict = seqcontactDict
         self.len = len(dataset)

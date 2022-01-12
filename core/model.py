@@ -71,8 +71,8 @@ class MHSADrugVQA(tf.keras.models.Model):
 
         self.Lembedding = Smiles_Embedding(n_chars, Dim)
         self.Vembedding = PatchesEmbedding(patch_size, Dim)
-        self.size_2d = size_2D
-        self.size_1d = size_1D
+        #self.size_2d = size_2D
+        #self.size_1d = size_1D
         self.output_dim = mcb_dim
         self.h_vector = tf.random.uniform(shape = (1,Dim), minval=0, maxval=mcb_dim)
         self.s_vector = tf.random.uniform(shape = (1,Dim), minval=0, maxval=2)
@@ -83,11 +83,11 @@ class MHSADrugVQA(tf.keras.models.Model):
 
         self.classifier = tf.keras.Sequential([
             tf.keras.layers.LayerNormalization(epsilon = norm_coff),
-            tf.keras.layers.Dense(units = 2048, activation = 'tanh'),
+            tf.keras.layers.Dense(units = 2048, activation = 'relu'),
             tf.keras.layers.Dropout(rate = dropout),
-            tf.keras.layers.Dense(units = 2048, activation = 'tanh'),
+            tf.keras.layers.Dense(units = 2048, activation = 'relu'),
             tf.keras.layers.Dropout(rate = dropout),
-            tf.keras.layers.Dense(units = 2048, activation = 'tanh'),
+            tf.keras.layers.Dense(units = 2048, activation = 'relu'),
             tf.keras.layers.Dropout(rate = dropout),
             tf.keras.layers.Dense(units = 2, activation = 'softmax')
         ]
@@ -111,7 +111,7 @@ class MHSADrugVQA(tf.keras.models.Model):
         
         #Padding Feature 2D
         contactMap = np.reshape(contactMap, (1,contactMap.shape[1], contactMap.shape[-1],1))
-        contactMap_size = tf.shape(contactMap)[1]
+        
         #contactMap = tf.keras.layers.ZeroPadding2D(padding = ((0,self.size_2d-contactMap_size), (0, self.size_2d-contactMap_size)), data_format = 'channels_last')(contactMap) 
         
         #print("Init shape: Protein: {} ==== Ligand: {}".format(tf.shape(contactMap), tf.shape(smiles)))

@@ -19,12 +19,14 @@ def train(model):
     
     optimizer = tf.optimizers.Adam(learning_rate = 0.001)
     loss_obj = tf.keras.losses.CategoricalCrossentropy()
-    dataset = get_data_loader(trainDataSet[:10000], seqContactDict)
-
+    dataset = get_data_loader(trainDataSet, seqContactDict, True)
+    print("Load Data Sucessful!")
     for epoch in range(EPOCHS):
         epoch_loss_avg = tf.keras.metrics.Mean()
         print(epoch)
+        batch = 0
         for lines, contactMap, proper in tqdm(dataset):
+            
             """
             Input to model: 
             String: Smiles --> shape = [1,x]
@@ -46,8 +48,9 @@ def train(model):
             optimizer.apply_gradients((grads, var) for (grads, var) in zip(grads, model.trainable_variables))
             
             epoch_loss_avg.update_state(loss)
-            #if batch % 10 == 0:
-            #print("Loss: {}".format(epoch_loss_avg.result()))
+            if batch % 100 == 0 and batch is not 0:
+                print("Loss: {}".format(epoch_loss_avg.result()))
+            batch += 1
         metric = {}
         for x in testProteinList:
             pred = []
@@ -55,15 +58,15 @@ def train(model):
             #Preparing data for Testing
             print("Current Testing -->", x.split('_')[0])
             data = dataDict[x]
-            test_loader = get_data_loader(data, seqContactDict)
+            test_loader = get_data_loader(data, seqContactDict, True)
 
             #Testing phase
             print("Starting Testing...")
             for lines, contactMap, proper in tqdm(test_loader):
                 smiles, length, y = make_variables([lines], proper, smiles_letters)
                 smiles = tf.reshape(smiles, [1, smiles.shape[-1]])
-                
-                logits = model(smiles, contactMap)
+                print("Label in test: {}".format(y))
+                logits = model(smiles, contactMap, training=False)
                 #print("Predict: {} -- Actual: {}".format(np.argmax(logits), np.argmax(y)))
                 #print("Predict: {} -- Actual: {}".format((logits), (y)))
                 pred.append(np.argmax(logits))

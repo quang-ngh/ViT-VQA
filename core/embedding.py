@@ -1,5 +1,6 @@
 import tensorflow as tf
-
+import matplotlib.pyplot as plt
+import numpy as np
 class Patches(tf.keras.layers.Layer):
     def __init__(self, pat_size):
         super(Patches, self).__init__()
@@ -49,15 +50,20 @@ class PatchesEmbedding(tf.keras.layers.Layer):
         #Padding ContactMap
         #print("Shape of 2D: {}".format(tf.shape(contactMap)))
         #print("Shape before padding: {}".format(tf.shape(contactMap)))
-        contactMap_size = tf.shape(contactMap)[0]
+        contactMap_size = tf.shape(contactMap)[1]
+        #print("Shape of contactMap: {}".format(contactMap_size))
         self.num_patches = (contactMap_size // self.patches_size) ** 2
+        #print("Num of patches: {}".format(self.num_patches))
         self.pos_embedding = self.add_weight(
             "pos_embd",
             shape = [self.num_patches + 1, self.hidden_dim],
             initializer = tf.keras.initializers.RandomNormal(),
             dtype = tf.float32
         )
+        
         patches = self.patches(contactMap)
+        #fig = plt.figure(figsize = (self.patches_size,self.patches_size))
+        
         patches_encoded = self.projection(patches)
         
         tmp_cls = tf.cast(
@@ -67,6 +73,7 @@ class PatchesEmbedding(tf.keras.layers.Layer):
         
         patches_encoded = tf.concat([tmp_cls, patches_encoded], axis = 1)
         patches_encoded = patches_encoded + self.pos_embedding
+        
         #print("Shape {}".format(patches_encoded.shape))
         return patches_encoded
 

@@ -43,8 +43,6 @@ class PatchesEmbedding(tf.keras.layers.Layer):
             initializer = tf.keras.initializers.RandomNormal(),
             dtype = tf.float32
         )
-        
-    
     def call(self, contactMap):
         
         #Padding ContactMap

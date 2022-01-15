@@ -24,7 +24,7 @@ def replace_halogen(string):
 def make_variables(lines, properties,letters):
     sequence_and_length = [line2voc_arr(line,letters) for line in lines]
     vectorized_seqs = [sl[0] for sl in sequence_and_length]
-    seq_lengths = tf.convert_to_tensor([sl[1] for sl in sequence_and_length], dtype = tf.int64)
+    seq_lengths = tf.convert_to_tensor([sl[1] for sl in sequence_and_length], dtype = tf.int32)
     return pad_sequences(vectorized_seqs, seq_lengths, properties)
 
 def line2voc_arr(line,letters):
@@ -72,7 +72,7 @@ def pad_sequences(vectorized_seqs, seq_lengths, properties):
     # DataParallel requires everything to be a Variable
     return create_variable(seq_tensor),create_variable(seq_lengths),create_variable(target)
 def pad_sequences_seq(vectorized_seqs, seq_lengths):
-    seq_tensor = tf.zeros((len(vectorized_seqs), seq_lengths.max()), dtype = tf.float64)
+    seq_tensor = tf.zeros((len(vectorized_seqs), seq_lengths.max()), dtype = tf.float32)
     for idx, (seq, seq_len) in enumerate(zip(vectorized_seqs, seq_lengths)):
         seq_tensor[idx, :seq_len] = tf.convert_to_tensor(seq,dtype=tf.float64)
 
@@ -146,10 +146,12 @@ def getSeqContactDict(contactPath,contactDictPath):# make a seq-contactMap dict
         feature2D = tf.convert_to_tensor(feature2D, dtype=tf.float64) #Shape = [1,H,W]
         seqContactDict[seq] = feature2D
     return seqContactDict
+
 def getLetters(path):
     with open(path, 'r') as f:
         chars = f.read().split()
     return chars
+
 def getDataDict(testProteinList,activePath,decoyPath,contactPath):
     dataDict = {}
     for x in testProteinList:#'xiap_2jk7A_full'

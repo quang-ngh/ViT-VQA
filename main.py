@@ -19,7 +19,7 @@ def train(model):
     
     optimizer = tf.optimizers.Adam(learning_rate = 0.001)
     loss_obj = tf.keras.losses.CategoricalCrossentropy()
-    dataset = get_data_loader(trainDataSet, seqContactDict, True)
+    dataset = get_data_loader(trainDataSet[:], seqContactDict, True)
     print("Load Data Sucessful!")
     for epoch in range(EPOCHS):
         epoch_loss_avg = tf.keras.metrics.Mean()
@@ -51,6 +51,7 @@ def train(model):
             if batch % 100 == 0 and batch is not 0:
                 print("Loss: {}".format(epoch_loss_avg.result()))
             batch += 1
+        """
         metric = {}
         for x in testProteinList:
             pred = []
@@ -91,7 +92,7 @@ def train(model):
 
             print("End...")
             print("\n")      
-            
+        """
 train(model)   
 
                 

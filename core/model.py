@@ -8,6 +8,7 @@ from core.encode import *
 from utils import *
 import numpy as np
 import matplotlib.pyplot as plt
+
 class MCB(tf.keras.layers.Layer):
     def __init__(self, h_vec, s_vec, output_dim):
         super(MCB, self).__init__()
@@ -83,11 +84,11 @@ class MHSADrugVQA(tf.keras.models.Model):
 
         self.classifier = tf.keras.Sequential([
             tf.keras.layers.LayerNormalization(epsilon = norm_coff),
-            tf.keras.layers.Dense(units = 2048, activation = 'relu'),
+            tf.keras.layers.Dense(units = self.output_dim, activation = 'relu'),
             tf.keras.layers.Dropout(rate = dropout),
-            tf.keras.layers.Dense(units = 2048, activation = 'relu'),
+            tf.keras.layers.Dense(units = self.output_dim, activation = 'relu'),
             tf.keras.layers.Dropout(rate = dropout),
-            tf.keras.layers.Dense(units = 2048, activation = 'relu'),
+            tf.keras.layers.Dense(units = self.output_dim, activation = 'relu'),
             tf.keras.layers.Dropout(rate = dropout),
             tf.keras.layers.Dense(units = 2, activation = 'softmax')
         ]
@@ -114,12 +115,12 @@ class MHSADrugVQA(tf.keras.models.Model):
         
         #contactMap = tf.keras.layers.ZeroPadding2D(padding = ((0,self.size_2d-contactMap_size), (0, self.size_2d-contactMap_size)), data_format = 'channels_last')(contactMap) 
         
-        #print("Init shape: Protein: {} ==== Ligand: {}".format(tf.shape(contactMap), tf.shape(smiles)))
+        print("Init shape: Protein: {} ==== Ligand: {}".format(tf.shape(contactMap), tf.shape(smiles)))
 
         v_embd = self.Vembedding(contactMap)
         l_embd = self.Lembedding(smiles)
         
-        #print("Init --> Embedding Shape: Protein: {} === Ligand: {}".format(tf.shape(v_embd), tf.shape(l_embd)))
+        print("Init --> Embedding Shape: Protein: {} === Ligand: {}".format(tf.shape(v_embd), tf.shape(l_embd)))
         
         img_rep = self.encoderV(v_embd) #Shape = [batch_size, Dim] 
         seq_rep = self.encoderL(l_embd)
@@ -131,12 +132,12 @@ class MHSADrugVQA(tf.keras.models.Model):
         img_vec = img_rep[:, 0]
         seq_vec = seq_rep[:, 0]
         
-        #print("Vector dim: Protein: {} ==== Ligand: {}".format(tf.shape(img_vec), tf.shape(seq_vec)))
+        print("Vector dim: Protein: {} ==== Ligand: {}".format(tf.shape(img_vec), tf.shape(seq_vec)))
         mcb_output = self.mcb(img_vec, seq_vec)
         
         #mcb_output = tf.concat([img_vec, seq_vec], axis = 1, name = "concat_vl")
         
-        #print("MCB pooling shape: {}".format(tf.shape(mcb_output)))
+        print("MCB pooling shape: {}".format(tf.shape(mcb_output)))
         output = self.classifier(mcb_output)
         
 

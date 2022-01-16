@@ -78,9 +78,9 @@ class MHSADrugVQA(tf.keras.models.Model):
         self.h_vector = tf.random.uniform(shape = (1,Dim), minval=0, maxval=mcb_dim)
         self.s_vector = tf.random.uniform(shape = (1,Dim), minval=0, maxval=2)
         self.h_vector = tf.cast(self.h_vector, tf.int32)
-        #print("h vec: {}".format(self.h_vector))
+        ##print("h vec: {}".format(self.h_vector))
         self.s_vector = tf.cast(tf.floor(self.s_vector)*2-1, tf.int32)
-        #asprint("S vec: {}".format(self.s_vector))
+        #as#print("S vec: {}".format(self.s_vector))
 
         self.classifier = tf.keras.Sequential([
             tf.keras.layers.LayerNormalization(epsilon = norm_coff),
@@ -115,12 +115,12 @@ class MHSADrugVQA(tf.keras.models.Model):
         
         #contactMap = tf.keras.layers.ZeroPadding2D(padding = ((0,self.size_2d-contactMap_size), (0, self.size_2d-contactMap_size)), data_format = 'channels_last')(contactMap) 
         
-        print("Init shape: Protein: {} ==== Ligand: {}".format(tf.shape(contactMap), tf.shape(smiles)))
+        #print("Init shape: Protein: {} ==== Ligand: {}".format(tf.shape(contactMap), tf.shape(smiles)))
 
         v_embd = self.Vembedding(contactMap)
         l_embd = self.Lembedding(smiles)
         
-        print("Init --> Embedding Shape: Protein: {} === Ligand: {}".format(tf.shape(v_embd), tf.shape(l_embd)))
+        #print("Init --> Embedding Shape: Protein: {} === Ligand: {}".format(tf.shape(v_embd), tf.shape(l_embd)))
         
         img_rep = self.encoderV(v_embd) #Shape = [batch_size, Dim] 
         seq_rep = self.encoderL(l_embd)
@@ -132,12 +132,12 @@ class MHSADrugVQA(tf.keras.models.Model):
         img_vec = img_rep[:, 0]
         seq_vec = seq_rep[:, 0]
         
-        print("Vector dim: Protein: {} ==== Ligand: {}".format(tf.shape(img_vec), tf.shape(seq_vec)))
+        #print("Vector dim: Protein: {} ==== Ligand: {}".format(tf.shape(img_vec), tf.shape(seq_vec)))
         mcb_output = self.mcb(img_vec, seq_vec)
         
         #mcb_output = tf.concat([img_vec, seq_vec], axis = 1, name = "concat_vl")
         
-        print("MCB pooling shape: {}".format(tf.shape(mcb_output)))
+        #print("MCB pooling shape: {}".format(tf.shape(mcb_output)))
         output = self.classifier(mcb_output)
         
 

@@ -6,24 +6,27 @@ import random
 from dataTF import *
 from utils import *
 import matplotlib.pyplot as plt
-#import tensorflow_addons as tfa
 from tqdm import tqdm
 from sklearn import metrics
 import pickle
 
-EPOCHS = 30
+EPOCHS = 10
 train_loss = []
 model = create_model()
+optimizer = tf.optimizers.Adam(learning_rate = 0.001)
+loss_obj = tf.keras.losses.CategoricalCrossentropy()
+devices = tf.config.list_physical_devices('GPU')
+try:
+    tf.config.experimental.set_memory_growth(devices[0], True)
+except:
+    print("Cannot set memory growth")
 
 def train(model):
-    
-    optimizer = tf.optimizers.Adam(learning_rate = 0.001)
-    loss_obj = tf.keras.losses.CategoricalCrossentropy()
     dataset = get_data_loader(trainDataSet[:], seqContactDict, True)
     print("Load Data Sucessful!")
     for epoch in range(EPOCHS):
         epoch_loss_avg = tf.keras.metrics.Mean()
-        print(epoch)
+        print("Epoch: {}".format(epoch))
         batch = 0
         for lines, contactMap, proper in tqdm(dataset):
             
@@ -32,9 +35,7 @@ def train(model):
             String: Smiles --> shape = [1,x]
             Feature 2D: Contactmap --> Shape = [1, size, size, 1]
             """
-            #print("Image:")
             
-
             smiles, length, y = make_variables([lines], proper, smiles_letters)
             smiles = tf.reshape(smiles, [1, smiles.shape[-1]])
             

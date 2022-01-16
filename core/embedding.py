@@ -60,7 +60,7 @@ class PatchesEmbedding(tf.keras.layers.Layer):
         )
         
         patches = self.patches(contactMap)
-        #fig = plt.figure(figsize = (self.patches_size,self.patches_size))
+        
         
         patches_encoded = self.projection(patches)
         

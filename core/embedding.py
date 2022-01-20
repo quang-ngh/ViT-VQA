@@ -1,3 +1,4 @@
+from unittest.mock import patch
 import tensorflow as tf
 import matplotlib.pyplot as plt
 import numpy as np
@@ -60,10 +61,10 @@ class PatchesEmbedding(tf.keras.layers.Layer):
         )
         
         patches = self.patches(contactMap)
-        
+            
         
         patches_encoded = self.projection(patches)
-        
+        #print("Shape after project: {}".format(patches_encoded.shape))
         tmp_cls = tf.cast(
             tf.broadcast_to(self.cls_token, [tf.shape(contactMap)[0],1,tf.shape(patches_encoded)[-1]]),
             dtype = contactMap.dtype
@@ -78,6 +79,7 @@ class PatchesEmbedding(tf.keras.layers.Layer):
 class Smiles_Embedding(tf.keras.layers.Layer):
     def __init__(self, n_char, hidden_dim):
         super(Smiles_Embedding, self).__init__()
+
         self.n_char = n_char
         self.hidden_dim = hidden_dim
         self.embd = tf.keras.layers.Embedding(n_char, hidden_dim, name = "smiles_embd")
@@ -91,7 +93,7 @@ class Smiles_Embedding(tf.keras.layers.Layer):
     def call(self, inputs):
         #print("Shape of string inp: {}".format(tf.shape(inputs)))
         output = self.embd(inputs)
-        tmp_cls = tf.cast(tf.broadcast_to(self.s_cls_token, [tf.shape(inputs)[0],1,tf.shape(output)[-1]]),
+        str_tmp_cls = tf.cast(tf.broadcast_to(self.s_cls_token, [tf.shape(inputs)[0],1,tf.shape(output)[-1]]),
                             dtype = tf.float32)
-        output = tf.concat([tmp_cls, output], axis = 1)
+        output = tf.concat([str_tmp_cls, output], axis = 1)
         return output

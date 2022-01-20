@@ -1,3 +1,4 @@
+from random import randint
 import tensorflow as tf
 
 class FC(tf.keras.layers.Layer):
@@ -41,14 +42,14 @@ class MHSABlock(tf.keras.layers.Layer):
         attention = self.attention(query = query, value = value, key = key) # Pass by Multihead attention
         
         attention += inputs #Skip connection
-        skip = attention
-        attention = self.layerNormFC(attention) # Pass by layer norm 
         
-        attention = self.FC(attention) # Pass by fully connected 
+        output = self.layerNormFC(attention) # Pass by layer norm 
         
-        attention += skip # Skip connection
-
-        return attention
+        output = self.FC(output) # Pass by fully connected 
+    
+        output += attention
+        return output
+        #return attention
 
 class Encoder(tf.keras.layers.Layer):
     def __init__(self, num_layers_encoder, num_heads, Dim, hidden_dim, dropout, norm_coff = 1e-12):

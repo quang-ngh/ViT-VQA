@@ -1,5 +1,6 @@
 from math import e
 from random import random, uniform
+from ssl import VerifyMode
 import tensorflow as tf
 from tensorflow.python.framework.tensor_shape import Dimension
 from tensorflow.python.ops.array_ops import zeros
@@ -8,6 +9,11 @@ from core.encode import *
 from utils import *
 import numpy as np
 import matplotlib.pyplot as plt
+
+def show(img, size):
+    view = tf.reshape(img, [size[0], size[1]])
+    plt.imshow(view)
+    plt.show()
 
 class MCB(tf.keras.layers.Layer):
     def __init__(self, h_vec, s_vec, output_dim):
@@ -119,24 +125,20 @@ class MHSADrugVQA(tf.keras.models.Model):
 
         v_embd = self.Vembedding(contactMap)
         l_embd = self.Lembedding(smiles)
-        
+        #show(v_embd, [v_embd.shape[1], v_embd.shape[-1]])
         #print("Init --> Embedding Shape: Protein: {} === Ligand: {}".format(tf.shape(v_embd), tf.shape(l_embd)))
         
         img_rep = self.encoderV(v_embd) #Shape = [batch_size, Dim] 
         seq_rep = self.encoderL(l_embd)
 
-        #view = tf.reshape(seq_rep, [seq_rep.shape[1], seq_rep.shape[-1]])
-        #plt.imshow(view)
-        #plt.show()
-
+        
         img_vec = img_rep[:, 0]
         seq_vec = seq_rep[:, 0]
         
+        
         #print("Vector dim: Protein: {} ==== Ligand: {}".format(tf.shape(img_vec), tf.shape(seq_vec)))
         mcb_output = self.mcb(img_vec, seq_vec)
-        
-        #mcb_output = tf.concat([img_vec, seq_vec], axis = 1, name = "concat_vl")
-        
+        #show(mcb_output, [2, mcb_output.shape[-1]//2])
         #print("MCB pooling shape: {}".format(tf.shape(mcb_output)))
         output = self.classifier(mcb_output)
         

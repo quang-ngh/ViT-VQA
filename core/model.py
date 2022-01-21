@@ -57,7 +57,7 @@ class MCB(tf.keras.layers.Layer):
         output = tf.multiply(fft_img, fft_seq) #Element-wise product
 
         output = tf.math.real(tf.signal.ifft(output))
-        
+        output = tf.nn.l2_normalize(output, epsilon=1e-10)
         return output
 
 class MHSADrugVQA(tf.keras.models.Model):
@@ -138,6 +138,7 @@ class MHSADrugVQA(tf.keras.models.Model):
         
         #print("Vector dim: Protein: {} ==== Ligand: {}".format(tf.shape(img_vec), tf.shape(seq_vec)))
         mcb_output = self.mcb(img_vec, seq_vec)
+        
         #show(mcb_output, [2, mcb_output.shape[-1]//2])
         #print("MCB pooling shape: {}".format(tf.shape(mcb_output)))
         output = self.classifier(mcb_output)

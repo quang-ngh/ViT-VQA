@@ -10,48 +10,63 @@ from tqdm import tqdm
 from sklearn import metrics
 import pickle
 
-EPOCHS = 10
+IDX = 1000
+EPOCHS = 1
+TEST = False
 train_loss = []
+
 model = create_model()
-optimizer = tf.optimizers.Adam(learning_rate = 0.001)
-loss_obj = tf.keras.losses.CategoricalCrossentropy()
+model.load_weights("./save_model_2/mymodel"+str(IDX))
+
+print("Load weights success!")
+optimizer = tf.optimizers.Adam(learning_rate = 1e-5)
+loss_obj = tf.keras.losses.BinaryCrossentropy()
 devices = tf.config.list_physical_devices('GPU')
 try:
     tf.config.experimental.set_memory_growth(devices[0], True)
 except:
     print("Cannot set memory growth")
 
-def train(model):
-    dataset = get_data_loader(trainDataSet[:], seqContactDict, True)
+def train(model, test):
+    if test == True:
+        dataset = get_data_loader(trainDataSet[IDX:IDX+1], seqContactDict, False)
+
+    else:
+        dataset = get_data_loader(trainDataSet[IDX:], seqContactDict, False)
     print("Load Data Sucessful!")
     for epoch in range(EPOCHS):
         epoch_loss_avg = tf.keras.metrics.Mean()
         print("Epoch: {}".format(epoch))
-        batch = 0
-        for lines, contactMap, proper in tqdm(dataset):
-            
+
+        for batch, (lines, contactMap, proper) in tqdm(enumerate(dataset)):
+            batch += IDX
             """
-            Input to model: 
+            Input to model:
             String: Smiles --> shape = [1,x]
             Feature 2D: Contactmap --> Shape = [1, size, size, 1]
             """
-            
+
             smiles, length, y = make_variables([lines], proper, smiles_letters)
             smiles = tf.reshape(smiles, [1, smiles.shape[-1]])
-            
+
             with tf.GradientTape() as tape:
-                logits = model(smiles, contactMap, training=True) 
-                
+                logits = model(smiles, contactMap, training=True)
+
                 loss =loss_obj(y, logits)
 
             grads = tape.gradient(loss, model.trainable_variables)
-        
+
             optimizer.apply_gradients((grads, var) for (grads, var) in zip(grads, model.trainable_variables))
-            
+
             epoch_loss_avg.update_state(loss)
-            if batch % 100 == 0 and batch is not 0:
-                print("Loss: {}".format(epoch_loss_avg.result()))
-            batch += 1
+            if batch != 0:
+                if batch % 500 == 0 :
+                    print("Loss: {}".format(epoch_loss_avg.result()))
+                print("Batch: {}".format(batch))
+                if batch % 1000 == 0 :
+                    print("Saving model on batch {}...".format(batch))
+                    model.save_weights("./save_model_2/mymodel"+str(batch))
+                    print("Save success!")
         """
         metric = {}
         for x in testProteinList:
@@ -60,14 +75,14 @@ def train(model):
             #Preparing data for Testing
             print("Current Testing -->", x.split('_')[0])
             data = dataDict[x]
-            test_loader = get_data_loader(data, seqContactDict, True)
+            test_loader = get_data_loader(data[:], seqContactDict, True)
 
             #Testing phase
             print("Starting Testing...")
             for lines, contactMap, proper in tqdm(test_loader):
                 smiles, length, y = make_variables([lines], proper, smiles_letters)
                 smiles = tf.reshape(smiles, [1, smiles.shape[-1]])
-                print("Label in test: {}".format(y))
+                #print("Label in test: {}".format(y))
                 logits = model(smiles, contactMap, training=False)
                 #print("Predict: {} -- Actual: {}".format(np.argmax(logits), np.argmax(y)))
                 #print("Predict: {} -- Actual: {}".format((logits), (y)))
@@ -92,8 +107,7 @@ def train(model):
             print("Saving Success!")
 
             print("End...")
-            print("\n")      
-        """
-train(model)   
+            print("\n")
+            """
+train(model, TEST)
 
-                
